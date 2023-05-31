@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <style>
+        #email_content {
+            width: 500px;
+            min-height: 200px;
+            outline: none;
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 20px;
+            word-break: break-word;
+            line-height: 30px;
+        }
+
+        #email_content>.urgency {
+            background-color: #d1d5db;
+            color: #000;
+            padding: 2px 8px;
+        }
+
+        #email_content>.shady {
+            background-color: #f9a8d4;
+            color: #000;
+            padding: 2px 8px;
+        }
+
+        #email_content>.overpromise {
+            background-color: #fdba74;
+            color: #000;
+            padding: 2px 8px;
+        }
+
+        #email_content>.unnatural {
+            background-color: #f87171;
+            color: #000;
+            padding: 2px 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="email_content" contentEditable='true'></div>
+    <!-- Ram is a good boy and there is another bad person or guy sure i will pay -->
+
+    <script>
+
+        const urgency = ['Dear friend'];
+        const shady = ['Financial', 'privately owned funds', 'finance', 'Please'];
+        const overpromise = ['guaranteed', '5%'];
+        const unnatural = ['ASAP'];
+        const spamWords = ['Dear friend', 'Financial', 'privately owned funds', 'finance', 'Please', 'guaranteed', '5%', 'ASAP'];
+        const spamWordsSet = new Set(spamWords);
+        let sentence = $('#email_content').html();
+
+        function checkForSpam(senten) {
+            
+            let result = sentence.split(" ").map(word => spamWordsSet.has(word.toLowerCase()) ? '<span>' + word + '</span>' : word);
+            urgency.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="urgency">' + word + '</span>'));
+            shady.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="shady">' + word + '</span>'));
+            overpromise.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="overpromise">' + word + '</span>'));
+            unnatural.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="unnatural">' + word + '</span>'));
+        }
+
+        $("#email_content").bind("paste", function (e) {
+            // access the clipboard using the api
+            var pastedData = e.originalEvent.clipboardData.getData('text');
+            if (pastedData) {
+                sentence += pastedData;
+
+                checkForSpam(sentence);
+                return false;
+            }
+        });
+
+        $("#email_content").on('keyup',function(e){
+            sentence=$(this).text();
+            
+            setTimeout(() => {
+                checkForSpam(sentence);
+            }, 800);
+
+            if(sentence!=$("#email_content").text()){
+                $('#email_content').html(sentence);
+            }
+            return false;
+        });
+
+        $(document).on('keypress', function (e) {
+            if (e.which == 13) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+
+</html>
