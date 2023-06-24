@@ -8,7 +8,7 @@
     <title>Document</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <style>
-        #email-content {
+        #email_content {
             width: 500px;
             min-height: 200px;
             outline: none;
@@ -17,90 +17,155 @@
             font-size: 20px;
             word-break: break-word;
             line-height: 30px;
+            white-space: pre-wrap;
         }
 
-        #email-content>span {
-            background-color: red;
-            color: #fff;
+        #email_content>.urgency,div.urgency {
+            background-color: #d1d5db;
+            color: #000;
             padding: 2px 8px;
+        }
+
+        #email_content>.shady,div.shady{
+            background-color: #f9a8d4;
+            color: #000;
+            padding: 2px 8px;
+        }
+
+        #email_content>.overpromise,div.overpromise {
+            background-color: #fdba74;
+            color: #000;
+            padding: 2px 8px;
+        }
+
+        #email_content>.unnatural,div.unnatural{
+            background-color: #f87171;
+            color: #000;
+            padding: 2px 8px;
+        }
+
+        div.countContainer{
+            display: flex;
+            column-gap: 10px;
+        }
+        div.countContainer div{
+            min-width: 80px;
+            width: max-content;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 20px;
         }
     </style>
 </head>
 
 <body>
-    <div id="email-content" contentEditable='true'></div>
+    <div id="email_content" contentEditable='true'></div>
+    <div class="countContainer">
+        <button id="startDetection">Check4Spam</button>
+        <div class="urgency" id="urgency"></div>
+        <div class="shady" id="shady"></div>
+        <div class="overpromise" id="overpromise"></div>
+        <div class="unnatural" id="unnatural"></div>
+    </div>
     <!-- Ram is a good boy and there is another bad person or guy sure i will pay -->
 
     <script>
-        function catchPaste(evt, elem, callback) {
-            debugger
-            if (navigator.clipboard && navigator.clipboard.readText) {
-                // modern approach with Clipboard API
-                navigator.clipboard.readText().then(callback);
-            } else {
-                // Last resort fallback, using a timer
-                setTimeout(function () {
-                    callback(elem.value)
-                }, 100);
-            }
+
+        const urgency = ['Dear friend'];
+        const shady = ['Financial', 'privately owned funds', 'finance', 'Please'];
+        const overpromise = ['guaranteed', '5%', 'sure'];
+        const unnatural = ['ASAP'];
+        const spamWords = ['Dear friend', 'Financial', 'privately owned funds', 'finance', 'Please', 'guaranteed', '5%', 'ASAP'];
+        const spamWordsSet = new Set(spamWords);
+        // var sentence = $('#email_content').html();
+        let sentence = "";
+
+        function checkForSpam(senten) {
+            let result = sentence.split(" ").map(word => spamWordsSet.has(word.toLowerCase()) ? '<span>' + word + '</span>' : word);
+            urgency.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="urgency">' + word + '</span>'));
+            shady.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="shady">' + word + '</span>'));
+            overpromise.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="overpromise">' + word + '</span>'));
+            unnatural.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span class="unnatural">' + word + '</span>'));
+            $('#email_content').html(sentence);
+
+            checkWordCount();
         }
 
+        $("#email_content").bind("paste", function (e) {
+            // access the clipboard using the api
+            var pastedData = e.originalEvent.clipboardData.getData('text');
+            if (pastedData) {
+                sentence += pastedData;
 
-        $('#email-content').on('paste', function (evt) {
-            
-            catchPaste(evt, this, function (sentence) {
+                checkForSpam(sentence);
+            }
+            return false;
 
 
-                const spamWords = ['Dear friend','bad', 'guy', 'sure i will pay', 'Financial', 'privately owned funds', 'finance', 'guaranteed', '5%', 'Please', 'ASAP'];
-                const spamWordsSet = new Set(spamWords);
+        });
 
-                const result = sentence.split(" ").map(word => spamWordsSet.has(word.toLowerCase()) ? '<span>' + word + '</span>' : word);
 
-                spamWords.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span>' + word + '</span>'));
-                $('#email-content').html(sentence)
+        $("#email_content").on('keyup', function (e) {
+            sentence = "";
+            if($('#email_content').text().length==0){
+                $('#email_content').text("");
+            }
+            if (e.key == " " ||  e.code == "Space" || e.keyCode == 32) {
+                $('#email_content span').removeAttr('class');
+                checkWordCount();
+            }
+        });
+
+
+        $("#startDetection").on('click', function () {
+            sentence = $('#email_content').text();
+            checkForSpam(sentence);
+            checkWordCount();
+        });
+
+        // on control buttons functions
+        $(document).ready(function () {
+            var ctrlDown = false,
+                ctrlKey = 17,
+                cmdKey = 91,
+                aKey = 65;
+
+            $(document).keydown(function (e) {
+                if (e.keyCode == ctrlKey || e.keyCode == cmdKey) ctrlDown = true;
+            }).keyup(function (e) {
+                if (e.keyCode == ctrlKey || e.keyCode == cmdKey) ctrlDown = false;
+            });
+
+            $(document).keydown(function (e) {
+                if (ctrlDown && (e.keyCode == aKey)) {
+                    $('#email_content span').removeAttr('class');
+                    checkWordCount();
+                };
             });
         });
-            // let checkForSpam = (sentence) => {
-            //     debugger;
-            //     const spamWords = ['bad', 'guy', 'sure i will pay'];
-            //     const spamWordsSet = new Set(spamWords);
 
-            //     const result = sentence.split(" ").map(word => spamWordsSet.has(word.toLowerCase()) ? '<span>' + word + '</span>' : word);
-
-            //     spamWords.forEach(word => sentence = sentence.replace(new RegExp(word, "ig"), '<span>' + word + '</span>'));
-            //     $('#email-content').html(sentence)
-            // }
+   
+        $(document).on('keypress', function (e) {
+            if (e.which == 13 && $('#email_content').text().length > 0) {
+                // sentence+= $('#email_content').text() + "<br>";
+            }
+        });
 
 
-            // let emailWords=[];
+        function checkWordCount(){
+            urgencyCount = $('#email_content span.urgency').length;
+            $('#urgency').text("Urgency: " + urgencyCount);
 
-            // $('#email-content').each(function(data){
-            //    let result = $(this).text().trim().split(' ');
+            shadyCount = $('#email_content span.shady').length;
+            $('#shady').text("Shady: " + shadyCount);
 
-            //    $.each(result,function (i,data) {
-            //     emailWords.push(result[i]);
-            //    });
+            overpromiseCount = $('#email_content span.overpromise').length;
+            $('#overpromise').text("Overpromise: " + overpromiseCount);
 
-
-            //    let spannedElement="";
-            //    const intersection = spamWords.filter(element => emailWords.includes(element));
-            //    $.each(result,function (i) {
-            //         if(emailWords.includes(intersection[i])){
-            //             let selectedWord='<span>'+intersection[i]+'</span>';
-            //             spannedElement+=selectedWord;
-            //         }
-            //    });
-            //     // console.log(spannedElement);
-            // });
-
-
-            // if(spamWords[i]===result[i]){
-            //             var selectedWord='<span>'+result[i]+'</span>';
-            //             spannedElement+=selectedWord;
-            //         }
-            //         console.log(spannedElement);
-
-
+            unnaturalCount = $('#email_content span.unnatural').length;
+            $('#unnatural').text("Unnatural: " + unnaturalCount);
+        }
     </script>
 </body>
 
